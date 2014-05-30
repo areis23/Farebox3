@@ -4,6 +4,7 @@ from declarativeBase import engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import func
 import csv
+from flask import Flask, render_template, request
 
 Base.metadata.create_all(engine)
 
@@ -11,16 +12,6 @@ Session = sessionmaker(bind=engine)
 
 session = Session()
 
-"""
-ed_user = User('ed', 'Ed Jones', 'edspassword')
-session.add(ed_user)
-session.add_all([
-	User('wendy', 'Wendy Williams', 'foobar'),
-	User('mary', 'Mary Contrary', 'xxg527'),
-	User('fred', 'Fred Flinstone', 'blah')])
-ed_user.password = 'f8s7ccs'
-our_user = session.query(User).filter_by(name = 'ed').first()
-"""
 with open('data.txt', 'rb') as csvfile:
 	fb_reader = csv.DictReader(csvfile, delimiter=',')
 	for row in fb_reader:
@@ -31,11 +22,20 @@ with open('data.txt', 'rb') as csvfile:
 			row['SIGN_ON_DATE'], \
 			row['COUNTY'], row['TYPE']))
 
-
-#print our_user
-#session.new
 session.commit()
-for instance in session.query(func.sum(Data.FARE_COLLECTED)).filter_by(LINE_NUMBER = 1):
-	line_sum = instance[0]
-print line_sum
 
+app = Flask(__name__)      
+ 
+@app.route('/')
+def home():
+	return render_template('home.html')
+	
+
+@app.route('/chart', methods=['POST'])
+def chart():
+	line = int(request.form['line'])
+	for instance in session.query(func.sum(Data.FARE_COLLECTED)).filter_by(LINE_NUMBER = line):
+		line_sum = instance[0]
+	return render_template('chart.html', line= line, line_sum=line_sum)
+
+`
